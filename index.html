@@ -1127,55 +1127,58 @@ document.addEventListener('keydown', e => {
 });
 
 // ─── FORM ────────────────────────────────────────────────────────────────────
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   const f = e.target;
   const btn = f.querySelector('.form-submit');
 
-  const fname   = f.fname.value.trim();
-  const lname   = f.lname.value.trim();
-  const email   = f.email.value.trim();
-  const phone   = f.phone.value.trim();
-  const service = f.service.value;
-  const date    = f.date.value.trim();
-  const message = f.message.value.trim();
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
 
-  const subject = encodeURIComponent(`Photography Inquiry — ${service || 'General'} | ${fname} ${lname}`);
-  const body = encodeURIComponent(
-`Hello Jethers Photography,
+  const data = {
+    name:    `${f.fname.value.trim()} ${f.lname.value.trim()}`,
+    email:   f.email.value.trim(),
+    phone:   f.phone.value.trim() || 'Not provided',
+    service: f.service.value     || 'Not specified',
+    date:    f.date.value.trim() || 'Not specified',
+    message: f.message.value.trim() || 'No message.',
+  };
 
-I would like to inquire about your photography services.
+  try {
+    const res = await fetch('https://formspree.io/f/mlgkdvzw', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify(data),
+    });
 
-Name: ${fname} ${lname}
-Email: ${email}
-Phone: ${phone || 'Not provided'}
-Service: ${service || 'Not specified'}
-Event Date: ${date || 'Not specified'}
-
-Message:
-${message || 'No additional message.'}
-
----
-Sent via jethersphotography.com`
-  );
-
-  btn.textContent = 'Opening Mail…';
-  btn.style.background = 'var(--gold)';
-  btn.style.borderColor = 'var(--gold)';
-
-  window.location.href = `mailto:uayanjethro4@gmail.com?subject=${subject}&body=${body}`;
-
-  setTimeout(() => {
-    btn.textContent = 'Inquiry Sent ✓';
-    btn.style.background = 'var(--sage)';
-    btn.style.borderColor = 'var(--sage)';
+    if (res.ok) {
+      btn.textContent  = 'Inquiry Sent ✓';
+      btn.style.opacity    = '1';
+      btn.style.background = 'var(--sage)';
+      btn.style.borderColor = 'var(--sage)';
+      f.reset();
+      setTimeout(() => {
+        btn.textContent = 'Send Inquiry';
+        btn.style.background  = '';
+        btn.style.borderColor = '';
+        btn.disabled = false;
+      }, 4000);
+    } else {
+      throw new Error('Server error');
+    }
+  } catch (err) {
+    btn.textContent  = 'Failed — Try Again';
+    btn.style.opacity    = '1';
+    btn.style.background = '#b05555';
+    btn.style.borderColor = '#b05555';
+    btn.disabled = false;
     setTimeout(() => {
       btn.textContent = 'Send Inquiry';
-      btn.style.background = '';
+      btn.style.background  = '';
       btn.style.borderColor = '';
-      f.reset();
     }, 3000);
-  }, 1500);
+  }
 }
 
 // ─── MISC ────────────────────────────────────────────────────────────────────
